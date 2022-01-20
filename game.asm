@@ -12,6 +12,13 @@ y_offset dw 00h
 bx_offset dw 00h
 by_offset dw 05h
 
+; building width and height
+building_width dw 00h
+building_height dw 00h
+
+building_x dw 00h
+building_y dw 05h
+
 ; we define the plane in an array of BIOS colors
 plane db 00h, 00h, 23 dup(0fh), 00h, 00h, 23 dup(0fh), 25 dup(00h), 25 dup(00h)
 
@@ -130,6 +137,32 @@ proc draw_plane
         ret
 endp
 
+proc draw_building
+    mov cx, [building_x]
+    mov dx, [building_y]
+    draw_building_pixel:
+        mov al, 00h
+        mov ah, 0Ch
+        int 10h
+    draw_building_repeat:
+        sub cx, [building_x]
+        cmp cx, [building_width]
+        je draw_building_add_y
+        add cx, [building_x]
+        inc cx
+        jmp draw_building_pixel
+    draw_building_add_y:
+        sub dx, [building_y]
+        cmp dx, [building_height]
+        je exit_draw_building
+        add dx, [building_y]
+        inc dx
+        mov cx, [building_x]
+        jmp draw_building_pixel
+    exit_draw_building:
+        ret   
+endp
+
 proc draw_bullet
     mov cx, [bx_offset]
     mov dx, [by_offset]
@@ -201,12 +234,35 @@ proc wait_for_spacebar
         ret
 endp
 
+proc draw_all_buildings
+    mov bx, 00h
+    draw_all_buildings_loop:
+        mov ah, 00h
+        int 1ah
+        mov ax, dx
+        xor dx, dx
+        mov cx, 100
+        div cx
+        mov [building_width], 10h
+        mov [building_height], dx
+        mov ax, 200
+        sub ax, dx
+        mov [building_y], ax
+        mov [building_x], bx
+        call draw_building
+        add bx, 10h
+    cmp bx, 336
+    jne draw_all_buildings_loop
+    ret
+endp
+
 Start:
     mov ax, @data
     mov ds, ax
 
     call move_to_graphics_mode
     call draw_plane
+    call draw_all_buildings
     call wait_for_spacebar
 
 Exit:
