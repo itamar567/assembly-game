@@ -8,9 +8,14 @@ DATASEG
 x_offset dw 00h
 y_offset dw 00h
 
-; bullet xy cords
+bullet_count dw 00h
+
+; bullet xy cords array
+bx_offset_array dw 500 dup(0000h)
+by_offset_array dw 500 dup(0000h)
+
 bx_offset dw 00h
-by_offset dw 05h
+by_offset dw 00h
 
 ; building width and height
 building_width dw 00h
@@ -107,7 +112,7 @@ proc draw_plane
     draw_plane_main_loop:
         mov al, [si] ; We will draw the pixel by changing it to its color in the array
         mov ah, 0Ch
-	   mov cx, [draw_delete_plane_x]
+	    mov cx, [draw_delete_plane_x]
         mov dx, [draw_delete_plane_y]
         int 10h
 
@@ -190,6 +195,8 @@ proc draw_bullet
 endp
 
 proc delete_bullet
+    push cx
+    push dx
     mov cx, [bx_offset]
     mov dx, [by_offset]
     delete_bullet_pixel:
@@ -212,26 +219,34 @@ proc delete_bullet
         mov cx, [bx_offset]
         jmp delete_bullet_pixel
     dexit_draw_bullet:
+        pop dx
+        pop cx
         ret
 endp
 
-proc wait_for_spacebar
-    wait_for_spacebar_start:
-        mov ah, 0
-        int 16h
-        cmp al, ' '
-        je spacebar_pressed
-        jmp exitfunc
-    spacebar_pressed:
-        call delete_bullet
-        mov si, offset by_offset
-	    mov ax, [si]
-	    inc ax
-	    mov [si], ax
-	    call draw_bullet
-    exitfunc:
-        jmp wait_for_spacebar_start
-        ret
+; arguments: dx=seed
+; returns a random number between 1 and 100
+proc randomize_dx
+    push ax
+    push bx
+    push cx
+
+    mov ax, 62753
+    mov cx, 100
+
+    randomize_dx_loop:
+        mul dx
+        add ax, 48541
+        mov dx, 00h
+        div cx
+        inc bx
+        cmp bx, 35
+        jle randomize_dx_loop
+
+    pop cx
+    pop bx
+    pop ax
+    ret
 endp
 
 proc draw_all_buildings
@@ -244,6 +259,7 @@ proc draw_all_buildings
         mov cx, 100
         div cx
         mov [building_width], 10h
+        call randomize_dx
         mov [building_height], dx
         mov ax, 200
         sub ax, dx
@@ -251,8 +267,66 @@ proc draw_all_buildings
         mov [building_x], bx
         call draw_building
         add bx, 10h
-    cmp bx, 336
+    
+    mov ax, bx ; save bx in ax
+    mov bx, 02h
+    call delay
+    mov bx, ax ; restore bx
+
+    cmp bx, 320
     jne draw_all_buildings_loop
+    ret
+endp
+
+proc delay
+    push ax
+    tick:
+    mov ah, 00h
+    int 1ah
+    cmp si, dx
+    jz tick 
+    mov si, dx
+    dec bx
+    jnz tick
+    pop ax
+    ret
+endp
+
+proc update_bullets
+    push bx
+    mov bx, 00h
+    update_current_bullet:
+        mov cx, [bx_offset_array+bx]
+        mov dx, [by_offset_array+bx]
+        cmp dx, 0000h
+        je repeat_update_bullets
+        mov [bx_offset], cx
+        mov [by_offset], dx
+        call delete_bullet
+        add dx, 01h
+        mov [by_offset], dx
+        mov [by_offset_array+bx], dx
+        call draw_bullet
+
+    repeat_update_bullets:
+        add bx, 02h
+        cmp bx, [bullet_count]
+        jle update_current_bullet
+    pop bx
+    ret
+endp
+
+proc create_bullet
+    push bx
+    mov bx, [bullet_count]
+    mov cx, [x_offset]
+    mov dx, [y_offset]
+    add dx, 05h
+    mov [bx_offset_array+bx], cx
+    mov [by_offset_array+bx], dx
+    add bx, 02h
+    mov [bullet_count], bx
+    pop bx
     ret
 endp
 
@@ -263,7 +337,40 @@ Start:
     call move_to_graphics_mode
     call draw_plane
     call draw_all_buildings
-    call wait_for_spacebar
+    jmp mainloop
+
+update_plane_y:
+    add [y_offset], 10h
+    mov [x_offset], 00h
+    jmp update_frame
+
+update_frame:
+    call delete_plane
+    mov si, offset x_offset
+    mov ax, [si]
+    cmp ax, 295
+    jge update_plane_y
+    add ax, 02h
+    mov [si], ax
+	call draw_plane
+    call update_bullets
+    jmp mainloop
+spacebar_pressed:
+    call create_bullet
+    jmp update_frame
+
+mainLoop:
+    mov bx, 02h
+    call delay
+
+    mov ah, 01h
+    int 16h
+    jz update_frame
+    mov ah, 00h
+    int 16h
+    cmp al, ' '
+    je spacebar_pressed
+    jmp update_frame
 
 Exit:
 END start
