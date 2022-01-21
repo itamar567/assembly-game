@@ -110,10 +110,16 @@ proc draw_plane
     mov bx, 00h ; bc is the loop index
     mov si, offset plane
     draw_plane_main_loop:
+        ; check if the pixel is black (if we are colliding with a building)
+        mov cx, [draw_delete_plane_x]
+        mov dx, [draw_delete_plane_y]
+        mov ah, 0Dh
+        int 10h
+        cmp al, 00h
+        je exit_game
+
         mov al, [si] ; We will draw the pixel by changing it to its color in the array
         mov ah, 0Ch
-	    mov cx, [draw_delete_plane_x]
-        mov dx, [draw_delete_plane_y]
         int 10h
 
         inc [draw_delete_plane_x]
@@ -132,7 +138,7 @@ proc draw_plane
             jmp draw_plane_main_loop
     draw_plane_update_y:
         sub [draw_delete_plane_x], 19h ; 19h=25 in decimal (number of pixels in a row). we are resetting cx to its default value
-	   inc [draw_delete_plane_y]
+	    inc [draw_delete_plane_y]
         jmp draw_plane_repeat
     draw_plane_end:
         pop dx
@@ -140,6 +146,8 @@ proc draw_plane
         pop si
         pop ax
         ret
+    exit_game:
+        int 4Ch
 endp
 
 proc draw_building
