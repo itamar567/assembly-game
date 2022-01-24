@@ -13,6 +13,7 @@ bullet_count dw 00h
 ; bullet xy cords array
 bx_offset_array dw 500 dup(0000h)
 by_offset_array dw 500 dup(0000h)
+dead_bullets_array dw 500 dup(0000h)
 
 bx_offset dw 00h
 by_offset dw 00h
@@ -185,14 +186,14 @@ proc draw_bullet
         int 10h
     repeat:
         sub cx, [bx_offset]
-        cmp cx, 03h
+        cmp cx, 0ah
         je db_add_y
         add cx, [bx_offset]
         inc cx
         jmp draw_bullet_pixel
     db_add_y:
         sub dx, [by_offset]
-        cmp dx, 03h
+        cmp dx, 0ah
         je exit_draw_bullet
         add dx, [by_offset]
         inc dx
@@ -213,14 +214,14 @@ proc delete_bullet
         int 10h
     drepeat:
         sub cx, [bx_offset]
-        cmp cx, 03h
+        cmp cx, 0ah
         je ddb_add_y
         add cx, [bx_offset]
         inc cx
         jmp delete_bullet_pixel
     ddb_add_y:
         sub dx, [by_offset]
-        cmp dx, 03h
+        cmp dx, 0ah
         je dexit_draw_bullet
         add dx, [by_offset]
         inc dx
@@ -266,7 +267,7 @@ proc draw_all_buildings
         xor dx, dx
         mov cx, 100
         div cx
-        mov [building_width], 10h
+        mov [building_width], 0ah
         call randomize_dx
         mov [building_height], dx
         mov ax, 200
@@ -274,7 +275,7 @@ proc draw_all_buildings
         mov [building_y], ax
         mov [building_x], bx
         call draw_building
-        add bx, 10h
+        add bx, 0ah
     
     mov ax, bx ; save bx in ax
     mov bx, 02h
@@ -306,22 +307,31 @@ proc update_bullets
     update_current_bullet:
         mov cx, [bx_offset_array+bx]
         mov dx, [by_offset_array+bx]
+        cmp [dead_bullets_array+bx], 01h
+        je repeat_update_bullets
         cmp dx, 0000h
         je repeat_update_bullets
         mov [bx_offset], cx
         mov [by_offset], dx
         call delete_bullet
-        add dx, 01h
+        add dx, 05h
+        cmp dx, 195
+        jge kill_bullet
         mov [by_offset], dx
         mov [by_offset_array+bx], dx
         call draw_bullet
+        jmp repeat_update_bullets
+        kill_bullet:
+            mov [dead_bullets_array+bx], 01h
 
     repeat_update_bullets:
         add bx, 02h
         cmp bx, [bullet_count]
         jle update_current_bullet
-    pop bx
-    ret
+        jmp exit_update_bullets
+    exit_update_bullets:
+        pop bx
+        ret
 endp
 
 proc create_bullet
@@ -356,9 +366,9 @@ update_frame:
     call delete_plane
     mov si, offset x_offset
     mov ax, [si]
-    cmp ax, 295
+    cmp ax, 290
     jge update_plane_y
-    add ax, 02h
+    add ax, 0ah
     mov [si], ax
 	call draw_plane
     call update_bullets
@@ -368,7 +378,7 @@ spacebar_pressed:
     jmp update_frame
 
 mainLoop:
-    mov bx, 02h
+    mov bx, 04h
     call delay
 
     mov ah, 01h
