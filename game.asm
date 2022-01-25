@@ -357,7 +357,7 @@ proc create_bullet
     mov bx, [bullet_count]
     mov cx, [x_offset]
     mov dx, [y_offset]
-    add dx, 05h
+    add dx, 01h
     cmp cx, 320
     jge create_bullet_add_plane_y
     jmp create_bullet_skip_add_plane_y
