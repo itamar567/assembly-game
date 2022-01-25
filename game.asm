@@ -15,6 +15,8 @@ bx_offset_array dw 500 dup(0000h)
 by_offset_array dw 500 dup(0000h)
 dead_bullets_array dw 500 dup(0000h)
 
+bullets_left dw 03h
+
 bx_offset dw 00h
 by_offset dw 00h
 
@@ -64,11 +66,19 @@ proc delete_plane
     mov bx, 00h ; bc is the loop index
     mov si, offset plane
     delete_plane_main_loop:
-        mov al, 0fh ; We will "delete" the pixel by changing its color to the background color, making it invisible
-        mov ah, 0Ch
-	   mov cx, [draw_delete_plane_x]
+        mov cx, [draw_delete_plane_x]
         mov dx, [draw_delete_plane_y]
+        mov al, 0fh
+        mov ah, 0Ch
+        cmp cx, 320
+        jge delete_plane_pixel_add_y
         int 10h
+        jmp delete_plane_skip_pixel_add_y
+        delete_plane_pixel_add_y:
+            add dx, 10h
+            sub cx, 320
+            int 10h
+        delete_plane_skip_pixel_add_y:
 
         inc [draw_delete_plane_x]
 
@@ -115,12 +125,6 @@ proc draw_plane
         mov cx, [draw_delete_plane_x]
         mov dx, [draw_delete_plane_y]
         mov ah, 0Dh
-        int 10h
-        cmp al, 00h
-        je exit_game
-
-        mov al, [si] ; We will draw the pixel by changing it to its color in the array
-        mov ah, 0Ch
         cmp cx, 320
         jge draw_plane_pixel_add_y
         int 10h
@@ -130,6 +134,12 @@ proc draw_plane
             sub cx, 320
             int 10h
         draw_plane_skip_pixel_add_y:
+        cmp al, 00h
+        je exit_game
+
+        mov al, [si] ; We will draw the pixel by changing it to its color in the array
+        mov ah, 0Ch
+        int 10h
 
         inc [draw_delete_plane_x]
 
@@ -374,6 +384,7 @@ Start:
 update_plane_y:
     add [y_offset], 10h
     mov [x_offset], 00h
+    add [bullets_left], 03h
     jmp update_frame
 
 update_frame:
@@ -388,7 +399,13 @@ update_frame:
     call update_bullets
     jmp mainloop
 spacebar_pressed:
-    call create_bullet
+    cmp [bullets_left], 00h
+    jg spacebar_pressed_create_bullet
+    jmp spacebar_pressed_skip_create_bullet
+    spacebar_pressed_create_bullet:
+        dec [bullets_left]
+        call create_bullet
+    spacebar_pressed_skip_create_bullet:
     jmp update_frame
 
 mainLoop:
