@@ -121,7 +121,15 @@ proc draw_plane
 
         mov al, [si] ; We will draw the pixel by changing it to its color in the array
         mov ah, 0Ch
+        cmp cx, 320
+        jge draw_plane_pixel_add_y
         int 10h
+        jmp draw_plane_skip_pixel_add_y
+        draw_plane_pixel_add_y:
+            add dx, 10h
+            sub cx, 320
+            int 10h
+        draw_plane_skip_pixel_add_y:
 
         inc [draw_delete_plane_x]
 
@@ -186,14 +194,14 @@ proc draw_bullet
         int 10h
     repeat:
         sub cx, [bx_offset]
-        cmp cx, 0ah
+        cmp cx, 09h
         je db_add_y
         add cx, [bx_offset]
         inc cx
         jmp draw_bullet_pixel
     db_add_y:
         sub dx, [by_offset]
-        cmp dx, 0ah
+        cmp dx, 09h
         je exit_draw_bullet
         add dx, [by_offset]
         inc dx
@@ -214,14 +222,14 @@ proc delete_bullet
         int 10h
     drepeat:
         sub cx, [bx_offset]
-        cmp cx, 0ah
+        cmp cx, 09h
         je ddb_add_y
         add cx, [bx_offset]
         inc cx
         jmp delete_bullet_pixel
     ddb_add_y:
         sub dx, [by_offset]
-        cmp dx, 0ah
+        cmp dx, 09h
         je dexit_draw_bullet
         add dx, [by_offset]
         inc dx
@@ -267,7 +275,7 @@ proc draw_all_buildings
         xor dx, dx
         mov cx, 100
         div cx
-        mov [building_width], 0ah
+        mov [building_width], 09h
         call randomize_dx
         mov [building_height], dx
         mov ax, 200
@@ -340,6 +348,12 @@ proc create_bullet
     mov cx, [x_offset]
     mov dx, [y_offset]
     add dx, 05h
+    cmp cx, 320
+    jge create_bullet_add_plane_y
+    jmp create_bullet_skip_add_plane_y
+    create_bullet_add_plane_y:
+        add dx, 10h
+    create_bullet_skip_add_plane_y:
     mov [bx_offset_array+bx], cx
     mov [by_offset_array+bx], dx
     add bx, 02h
@@ -366,7 +380,7 @@ update_frame:
     call delete_plane
     mov si, offset x_offset
     mov ax, [si]
-    cmp ax, 290
+    cmp ax, 320
     jge update_plane_y
     add ax, 0ah
     mov [si], ax
