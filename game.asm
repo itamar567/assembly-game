@@ -28,7 +28,8 @@ building_x dw 00h
 building_y dw 05h
 
 ; we define the plane in an array of BIOS colors
-plane db 00h, 00h, 23 dup(0fh), 00h, 00h, 23 dup(0fh), 25 dup(00h), 25 dup(00h)
+plane db 2 dup(0fh),3 dup(0h),45 dup(0fh),0h,2 dup(04h),0h,44 dup(0fh),0h,2 dup(04h),0h,44 dup(0fh),0h,3 dup(04h),0h,43 dup(0fh),0h,3 dup(04h),0h,43 dup(0fh),0h,4 dup(04h),0h,42 dup(0fh),0h,4 dup(04h),0h,42 dup(0fh),0h,5 dup(04h),0h,41 dup(0fh),0h,6 dup(04h),2 dup(0h),18 dup(0fh),11 dup(0h),10 dup(0fh),0h,8 dup(04h),0h,14 dup(0fh),3 dup(0h),11 dup(07h),3 dup(0h),6 dup(0fh),25 dup(0h),13 dup(07h),0h,08h,08h,08h,0h,4 dup(0fh),0h,26 dup(07h),0h,07h,0h,07h,0h,07h,0h,07h,0h,4 dup(07h),5 dup(0h),3 dup(0fh),0h,07h,8 dup(0h),07h,0h,07h,0h,07h,0h,07h,0h,07h,0h,07h,0h,07h,0h,21 dup(07h),2 dup(0h),0fh,0h,07h,0h,6 dup(04h),0h,15 dup(07h),9 dup(0h),13 dup(07h),0h,0fh,2 dup(0h),5 dup(04h),0h,15 dup(07h),0h,8 dup(04h),0h,13 dup(07h)
+db 0h,2 dup(0fh),0h,4 dup(04h),3 dup(0h),13 dup(07h),0h,8 dup(04h),0h,12 dup(07h),2 dup(0h),2 dup(0fh),0h,4 dup(04h),0h,3 dup(0fh),13 dup(0h),8 dup(04h),0h,9 dup(07h),4 dup(0h),4 dup(0fh),0h,2 dup(04h),2 dup(0h),15 dup(0fh),0h,7 dup(04h),12 dup(0h),8 dup(0fh),3 dup(0h),16 dup(0fh),0h,6 dup(04h),2 dup(0h),38 dup(0fh),0h,5 dup(04h),2 dup(0h),39 dup(0fh),0h,4 dup(04h),2 dup(0h),41 dup(0fh),5 dup(0h),0fh,0fh,0fh,0fh,0fh,0fh,0fh,0fh,0fh,0fh,0fh,0fh,0fh,0fh,0fh,0fh,0fh,0fh,0fh,0fh,0fh,0fh,0fh,0fh,0fh
 
 ; since we need more than a byte, we will use variables for the draw/delete plane functions.
 draw_delete_plane_x dw 00h
@@ -85,18 +86,18 @@ proc delete_plane
         mov di, offset x_offset
         mov ax, [di]
         sub [draw_delete_plane_x], ax
-        cmp [draw_delete_plane_x], 19h ; 19h=25 in decimal (number of pixels in a row)
+        cmp [draw_delete_plane_x], 48 ;number of pixels in a row
         jge delete_plane_update_y
         delete_plane_repeat:
             inc si ; move to the next pixel
             add [draw_delete_plane_x], ax
             inc bx
-            cmp bx, 64h ; check if we delete everything (64h=100=25*4)
+            cmp bx, 1056 ; check if we delete everything (1056=48*22)
             jge delete_plane_end
             jmp delete_plane_main_loop
     delete_plane_update_y:
-        sub [draw_delete_plane_x], 19h ; 19h=25 in decimal (number of pixels in a row). we are resetting cx to its default value
-	   inc [draw_delete_plane_y]
+        sub [draw_delete_plane_x], 48 ;number of pixels in a row
+	    inc [draw_delete_plane_y]
         jmp delete_plane_repeat
     delete_plane_end:
         pop dx
@@ -146,17 +147,17 @@ proc draw_plane
         mov di, offset x_offset
         mov ax, [di]
         sub [draw_delete_plane_x], ax
-        cmp [draw_delete_plane_x], 19h ; 19h=25 in decimal (number of pixels in a row)
+        cmp [draw_delete_plane_x], 48 ;number of pixels in a row
         jge draw_plane_update_y
         draw_plane_repeat:
             inc si ; move to the next pixel
             add [draw_delete_plane_x], ax
             inc bx
-            cmp bx, 64h ; check if we draw everything (64h=100=25*4)
+            cmp bx, 1056 ; check if we draw everything (1056=48*22)
             jge draw_plane_end
             jmp draw_plane_main_loop
     draw_plane_update_y:
-        sub [draw_delete_plane_x], 19h ; 19h=25 in decimal (number of pixels in a row). we are resetting cx to its default value
+        sub [draw_delete_plane_x], 48 ;number of pixels in a row
 	    inc [draw_delete_plane_y]
         jmp draw_plane_repeat
     draw_plane_end:
