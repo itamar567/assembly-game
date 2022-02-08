@@ -28,8 +28,8 @@ building_x dw 00h
 building_y dw 05h
 
 ; we define the plane in an array of BIOS colors
-plane db 2 dup(0fh),3 dup(0h),45 dup(0fh),0h,2 dup(04h),0h,44 dup(0fh),0h,2 dup(04h),0h,44 dup(0fh),0h,3 dup(04h),0h,43 dup(0fh),0h,3 dup(04h),0h,43 dup(0fh),0h,4 dup(04h),0h,42 dup(0fh),0h,4 dup(04h),0h,42 dup(0fh),0h,5 dup(04h),0h,41 dup(0fh),0h,6 dup(04h),2 dup(0h),18 dup(0fh),11 dup(0h),10 dup(0fh),0h,8 dup(04h),0h,14 dup(0fh),3 dup(0h),11 dup(07h),3 dup(0h),6 dup(0fh),25 dup(0h),13 dup(07h),0h,08h,08h,08h,0h,4 dup(0fh),0h,26 dup(07h),0h,07h,0h,07h,0h,07h,0h,07h,0h,4 dup(07h),5 dup(0h),3 dup(0fh),0h,07h,8 dup(0h),07h,0h,07h,0h,07h,0h,07h,0h,07h,0h,07h,0h,07h,0h,21 dup(07h),2 dup(0h),0fh,0h,07h,0h,6 dup(04h),0h,15 dup(07h),9 dup(0h),13 dup(07h),0h,0fh,2 dup(0h),5 dup(04h),0h,15 dup(07h),0h,8 dup(04h),0h,13 dup(07h)
-db 0h,2 dup(0fh),0h,4 dup(04h),3 dup(0h),13 dup(07h),0h,8 dup(04h),0h,12 dup(07h),2 dup(0h),2 dup(0fh),0h,4 dup(04h),0h,3 dup(0fh),13 dup(0h),8 dup(04h),0h,9 dup(07h),4 dup(0h),4 dup(0fh),0h,2 dup(04h),2 dup(0h),15 dup(0fh),0h,7 dup(04h),12 dup(0h),8 dup(0fh),3 dup(0h),16 dup(0fh),0h,6 dup(04h),2 dup(0h),38 dup(0fh),0h,5 dup(04h),2 dup(0h),39 dup(0fh),0h,4 dup(04h),2 dup(0h),41 dup(0fh),5 dup(0h),0fh,0fh,0fh,0fh,0fh,0fh,0fh,0fh,0fh,0fh,0fh,0fh,0fh,0fh,0fh,0fh,0fh,0fh,0fh,0fh,0fh,0fh,0fh,0fh,0fh
+plane db 2 dup(64h),3 dup(0h),45 dup(64h),0h,2 dup(04h),0h,44 dup(64h),0h,2 dup(04h),0h,44 dup(64h),0h,3 dup(04h),0h,43 dup(64h),0h,3 dup(04h),0h,43 dup(64h),0h,4 dup(04h),0h,42 dup(64h),0h,4 dup(04h),0h,42 dup(64h),0h,5 dup(04h),0h,41 dup(64h),0h,6 dup(04h),2 dup(0h),18 dup(64h),11 dup(0h),10 dup(64h),0h,8 dup(04h),0h,14 dup(64h),3 dup(0h),11 dup(07h),3 dup(0h),6 dup(64h),25 dup(0h),13 dup(07h),0h,08h,08h,08h,0h,4 dup(64h),0h,26 dup(07h),0h,07h,0h,07h,0h,07h,0h,07h,0h,4 dup(07h),5 dup(0h),3 dup(64h),0h,07h,8 dup(0h),07h,0h,07h,0h,07h,0h,07h,0h,07h,0h,07h,0h,07h,0h,21 dup(07h),2 dup(0h),64h,0h,07h,0h,6 dup(04h),0h,15 dup(07h),9 dup(0h),13 dup(07h),0h,64h,2 dup(0h),5 dup(04h),0h,15 dup(07h),0h,8 dup(04h),0h,13 dup(07h)
+db 0h,2 dup(64h),0h,4 dup(04h),3 dup(0h),13 dup(07h),0h,8 dup(04h),0h,12 dup(07h),2 dup(0h),2 dup(64h),0h,4 dup(04h),0h,3 dup(64h),13 dup(0h),8 dup(04h),0h,9 dup(07h),4 dup(0h),4 dup(64h),0h,2 dup(04h),2 dup(0h),15 dup(64h),0h,7 dup(04h),12 dup(0h),8 dup(64h),3 dup(0h),16 dup(64h),0h,6 dup(04h),2 dup(0h),38 dup(64h),0h,5 dup(04h),2 dup(0h),39 dup(64h),0h,4 dup(04h),2 dup(0h),41 dup(64h),5 dup(0h),64h,64h,64h,64h,64h,64h,64h,64h,64h,64h,64h,64h,64h,64h,64h,64h,64h,64h,64h,64h,64h,64h,64h,64h,64h
 
 ; since we need more than a byte, we will use variables for the draw/delete plane functions.
 draw_delete_plane_x dw 00h
@@ -44,10 +44,11 @@ proc move_to_graphics_mode
 endp
 
 proc change_bg_color
-    mov ax, 0600h
-    mov bh, 1fh
-    mov cx, 0000h
-    mov dx, 184fh
+    mov ah, 06h
+    xor al, al
+    xor cx, cx
+    mov dx, 184Fh
+    mov bh, 64h
     int 10h
     ret
 endp
@@ -69,7 +70,7 @@ proc delete_plane
     delete_plane_main_loop:
         mov cx, [draw_delete_plane_x]
         mov dx, [draw_delete_plane_y]
-        mov al, 0fh
+        mov al, 64h
         mov ah, 0Ch
         cmp cx, 320
         jge delete_plane_pixel_add_y
@@ -200,7 +201,7 @@ proc draw_bullet
     mov cx, [bx_offset]
     mov dx, [by_offset]
     draw_bullet_pixel:
-        mov al, 00h
+        mov al, 04h
         mov ah, 0Ch
         int 10h
     repeat:
@@ -212,7 +213,7 @@ proc draw_bullet
         jmp draw_bullet_pixel
     db_add_y:
         sub dx, [by_offset]
-        cmp dx, 09h
+        cmp dx, 0eh
         je exit_draw_bullet
         add dx, [by_offset]
         inc dx
@@ -228,7 +229,7 @@ proc delete_bullet
     mov cx, [bx_offset]
     mov dx, [by_offset]
     delete_bullet_pixel:
-        mov al, 0fh
+        mov al, 64h
         mov ah, 0Ch
         int 10h
     drepeat:
@@ -240,7 +241,7 @@ proc delete_bullet
         jmp delete_bullet_pixel
     ddb_add_y:
         sub dx, [by_offset]
-        cmp dx, 09h
+        cmp dx, 0eh
         je dexit_draw_bullet
         add dx, [by_offset]
         inc dx
@@ -355,6 +356,9 @@ endp
 
 proc create_bullet
     push bx
+    inc [bullets_left]
+    call delete_bullets_left
+    dec [bullets_left]
     mov bx, [bullet_count]
     mov cx, [x_offset]
     mov dx, [y_offset]
@@ -369,7 +373,61 @@ proc create_bullet
     mov [by_offset_array+bx], dx
     add bx, 02h
     mov [bullet_count], bx
+    call draw_bullets_left
     pop bx
+    ret
+endp
+
+proc draw_bullets_left
+    mov bx, 0
+    cmp [bullets_left], 00h
+    je exit_draw_ammo
+    draw_ammo:
+        mov cx, bx
+        add cx, cx
+        add cx, 1h
+        mov dx, 1h
+        
+        draw_ammo_pixel:
+            mov ah, 0Ch
+            mov al, 04h
+            int 10h
+        draw_ammo_update_y:
+            mov cx, bx
+            add cx, cx
+            add cx, 1
+            inc dx
+            cmp dx, 04h
+            jl draw_ammo_pixel
+    inc bx
+    cmp bx, [bullets_left]
+    jl draw_ammo
+    exit_draw_ammo:
+    ret
+endp
+
+proc delete_bullets_left
+    mov bx, 0
+    delete_ammo:
+        mov cx, bx
+        add cx, cx
+        add cx, 1h
+        mov dx, 1h
+        
+        delete_ammo_pixel:
+            mov ah, 0Ch
+            mov al, 64h
+            int 10h
+        delete_ammo_update_y:
+            mov cx, bx
+            add cx, cx
+            add cx, 1
+            inc dx
+            cmp dx, 04h
+            jl delete_ammo_pixel
+    inc bx
+    cmp bx, [bullets_left]
+    jl delete_ammo
     ret
 endp
 
@@ -378,6 +436,7 @@ Start:
     mov ds, ax
 
     call move_to_graphics_mode
+    call change_bg_color
     call draw_plane
     call draw_all_buildings
     jmp mainloop
@@ -386,6 +445,8 @@ update_plane_y:
     add [y_offset], 10h
     mov [x_offset], 00h
     add [bullets_left], 03h
+    call delete_bullets_left
+    call draw_bullets_left
     jmp update_frame
 
 update_frame:
