@@ -14,8 +14,12 @@ bullet_count dw 00h
 bx_offset_array dw 500 dup(0000h)
 by_offset_array dw 500 dup(0000h)
 dead_bullets_array dw 500 dup(0000h)
+bullets_destroy_count_array dw 500 dup(0000h)
 
-bullets_left dw 03h
+current_bullet dw 0000h
+draw_bullet_inc_destroy_count dw 00h
+
+bullets_left dw 05h
 
 bx_offset dw 00h
 by_offset dw 00h
@@ -201,6 +205,21 @@ proc draw_bullet
     mov cx, [bx_offset]
     mov dx, [by_offset]
     draw_bullet_pixel:
+        mov ah, 0Dh
+        int 10h
+        cmp al, 00h
+        je destroy_building
+        jmp skip_destroy_building
+
+        destroy_building:
+            cmp [draw_bullet_inc_destroy_count], 01h
+            je skip_destroy_building
+            mov bx, [current_bullet]
+            inc [bullets_destroy_count_array+bx]
+            mov [draw_bullet_inc_destroy_count], 01h
+
+        skip_destroy_building:
+
         mov al, 04h
         mov ah, 0Ch
         int 10h
@@ -220,6 +239,7 @@ proc draw_bullet
         mov cx, [bx_offset]
         jmp draw_bullet_pixel
     exit_draw_bullet:
+        mov [draw_bullet_inc_destroy_count], 00h
         ret
 endp
 
@@ -337,8 +357,11 @@ proc update_bullets
         add dx, 05h
         cmp dx, 190
         jge kill_bullet
+        cmp [bullets_destroy_count_array+bx], 0ah
+        jge kill_bullet
         mov [by_offset], dx
         mov [by_offset_array+bx], dx
+        mov [current_bullet], bx
         call draw_bullet
         jmp repeat_update_bullets
         kill_bullet:
@@ -444,7 +467,7 @@ Start:
 update_plane_y:
     add [y_offset], 10h
     mov [x_offset], 00h
-    add [bullets_left], 03h
+    add [bullets_left], 05h
     call delete_bullets_left
     call draw_bullets_left
     jmp update_frame
