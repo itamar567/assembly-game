@@ -335,7 +335,7 @@ proc update_bullets
         mov [by_offset], dx
         call delete_bullet
         add dx, 05h
-        cmp dx, 195
+        cmp dx, 190
         jge kill_bullet
         mov [by_offset], dx
         mov [by_offset_array+bx], dx
