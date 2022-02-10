@@ -9,6 +9,7 @@ x_offset dw 00h
 y_offset dw 00h
 
 bullet_count dw 00h
+bullet_durability dw 10h
 
 ; bullet xy cords array
 bx_offset_array dw 500 dup(0000h)
@@ -357,7 +358,8 @@ proc update_bullets
         add dx, 05h
         cmp dx, 190
         jge kill_bullet
-        cmp [bullets_destroy_count_array+bx], 0ah
+        mov ax, [bullet_durability]
+        cmp [bullets_destroy_count_array+bx], ax
         jge kill_bullet
         mov [by_offset], dx
         mov [by_offset_array+bx], dx
@@ -454,6 +456,21 @@ proc delete_bullets_left
     ret
 endp
 
+proc clear_array
+    push bx
+    push ax
+    mov bx, 00h
+    clear_array_loop:
+        mov ax, 0000h
+        mov [si+bx], ax
+        add bx, 02h
+        cmp bx, 1000
+        jl clear_array_loop
+    pop ax
+    pop bx
+    ret
+endp
+
 Start:
     mov ax, @data
     mov ds, ax
@@ -472,12 +489,34 @@ update_plane_y:
     call draw_bullets_left
     jmp update_frame
 
+next_level:
+    mov [x_offset], 00h
+    mov [y_offset], 00h
+    call draw_all_buildings
+    add [bullets_left], 05h
+    dec [bullet_durability]
+
+    ; clear bullet arrays to prevent overflow
+    mov si, offset bx_offset_array
+    call clear_array
+    mov si, offset by_offset_array
+    call clear_array
+    mov si, offset dead_bullets_array
+    call clear_array
+    mov si, offset bullets_destroy_count_array
+    call clear_array
+    mov [bullet_count], 00h
+
+    jmp mainloop
+
 update_frame:
     call delete_plane
     mov si, offset x_offset
     mov ax, [si]
     cmp ax, 320
     jge update_plane_y
+    cmp [y_offset], 0B0h
+    jge next_level
     add ax, 0ah
     mov [si], ax
 	call draw_plane
