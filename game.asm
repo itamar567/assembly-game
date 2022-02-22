@@ -25,6 +25,8 @@ bullets_left dw 05h
 bx_offset dw 00h
 by_offset dw 00h
 
+speed dw 05h
+
 ; building width and height
 building_width dw 00h
 building_height dw 00h
@@ -286,7 +288,7 @@ proc randomize_dx
 
     randomize_dx_loop:
         mul dx
-        add ax, 48541
+        add ax, 13849
         mov dx, 00h
         div cx
         inc bx
@@ -484,8 +486,10 @@ Start:
 update_plane_y:
     add [y_offset], 10h
     mov [x_offset], 00h
-    add [bullets_left], 05h
+    mov [bullets_left], 05h
+    inc [bullets_left]
     call delete_bullets_left
+    dec [bullets_left]
     call draw_bullets_left
     jmp update_frame
 
@@ -495,6 +499,12 @@ next_level:
     call draw_all_buildings
     add [bullets_left], 05h
     dec [bullet_durability]
+    cmp [speed], 03h
+    jg update_speed
+    jmp update_speed_skip
+    update_speed:
+        dec [speed]
+    update_speed_skip:
 
     ; clear bullet arrays to prevent overflow
     mov si, offset bx_offset_array
@@ -533,7 +543,7 @@ spacebar_pressed:
     jmp update_frame
 
 mainLoop:
-    mov bx, 04h
+    mov bx, [speed]
     call delay
 
     mov ah, 01h
