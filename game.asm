@@ -16,11 +16,13 @@ bx_offset_array dw 500 dup(0000h)
 by_offset_array dw 500 dup(0000h)
 dead_bullets_array dw 500 dup(0000h)
 bullets_destroy_count_array dw 500 dup(0000h)
+bullets_type_array dw 500 dup(0000h)
 
 current_bullet dw 0000h
 draw_bullet_inc_destroy_count dw 00h
 
 bullets_left dw 05h
+super_bullets_left dw 01h
 
 bx_offset dw 00h
 by_offset dw 00h
@@ -175,7 +177,11 @@ proc draw_plane
         pop ax
         ret
     exit_game:
-        int 4Ch
+        mov ah, 00h
+        int 16h
+        cmp al, ' '
+        je restart_middle1
+        jmp exit_game
 endp
 
 proc draw_building
@@ -204,6 +210,11 @@ proc draw_building
         ret   
 endp
 
+jmp restart_middle1_skip
+restart_middle1:
+    jmp restart_middle2
+restart_middle1_skip:
+
 proc draw_bullet
     mov cx, [bx_offset]
     mov dx, [by_offset]
@@ -223,7 +234,15 @@ proc draw_bullet
 
         skip_destroy_building:
 
+        mov si, offset bullets_type_array
+        add si, [current_bullet]
+        cmp [si], 0001h
+        je draw_super_bullet
         mov al, 04h
+        jmp draw_super_bullet_skip
+        draw_super_bullet:
+            mov al, 01h
+        draw_super_bullet_skip:
         mov ah, 0Ch
         int 10h
     repeat:
@@ -233,6 +252,12 @@ proc draw_bullet
         add cx, [bx_offset]
         inc cx
         jmp draw_bullet_pixel
+
+    jmp restart_middle2_skip
+    restart_middle2:
+        jmp restart_middle3
+    restart_middle2_skip:
+
     db_add_y:
         sub dx, [by_offset]
         cmp dx, 0eh
@@ -344,6 +369,11 @@ proc delay
     ret
 endp
 
+jmp restart_middle3_skip
+restart_middle3:
+    jmp restart
+restart_middle3_skip:
+
 proc update_bullets
     push bx
     mov bx, 00h
@@ -360,9 +390,12 @@ proc update_bullets
         add dx, 05h
         cmp dx, 190
         jge kill_bullet
+        cmp [bullets_type_array+bx], 0001h
+        je skip_bullet_durabillity_check
         mov ax, [bullet_durability]
         cmp [bullets_destroy_count_array+bx], ax
         jge kill_bullet
+        skip_bullet_durabillity_check:
         mov [by_offset], dx
         mov [by_offset_array+bx], dx
         mov [current_bullet], bx
@@ -398,6 +431,31 @@ proc create_bullet
     create_bullet_skip_add_plane_y:
     mov [bx_offset_array+bx], cx
     mov [by_offset_array+bx], dx
+    add bx, 02h
+    mov [bullet_count], bx
+    call draw_bullets_left
+    pop bx
+    ret
+endp
+
+proc create_super_bullet
+    push bx
+    inc [bullets_left]
+    call delete_bullets_left
+    dec [bullets_left]
+    mov bx, [bullet_count]
+    mov cx, [x_offset]
+    mov dx, [y_offset]
+    add dx, 01h
+    cmp cx, 320
+    jge create_super_bullet_add_plane_y
+    jmp create_super_bullet_skip_add_plane_y
+    create_super_bullet_add_plane_y:
+        add dx, 10h
+    create_super_bullet_skip_add_plane_y:
+    mov [bx_offset_array+bx], cx
+    mov [by_offset_array+bx], dx
+    mov [bullets_type_array+bx], 0001h
     add bx, 02h
     mov [bullet_count], bx
     call draw_bullets_left
@@ -473,11 +531,65 @@ proc clear_array
     ret
 endp
 
+proc draw_square
+    mov cx, 315
+    draw_square_x:
+        inc cx
+        mov dx, 00h
+        draw_square_y:
+            inc dx
+            int 10h
+            cmp dx, 04h
+            jl draw_square_y
+        cmp cx, 318
+        jl draw_square_x
+    ret
+endp
+
+proc update_super_ammo
+    cmp [super_bullets_left], 0000h
+    je delete_super_ammo
+    mov al, 01h
+    mov ah, 0Ch
+    mov cx, 317
+    mov dx, 01h
+    call draw_square
+    jmp exit_update_super_ammo
+    delete_super_ammo:
+    mov al, 064h
+    mov ah, 0Ch
+    mov cx, 317
+    mov dx, 01h
+    call draw_square
+    exit_update_super_ammo:
+    ret
+endp
+
 Start:
     mov ax, @data
     mov ds, ax
 
     call move_to_graphics_mode
+    jmp restart_skip
+    restart:
+        mov si, offset bx_offset_array
+        call clear_array
+        mov si, offset by_offset_array
+        call clear_array
+        mov si, offset dead_bullets_array
+        call clear_array
+        mov si, offset bullets_destroy_count_array
+        call clear_array
+        mov si, offset bullets_type_array
+        call clear_array
+        mov [bullet_count], 00h
+        mov [bullet_durability], 10h
+        mov [bullets_left], 05h
+        mov [super_bullets_left], 01h
+        mov [speed], 05h
+        mov [x_offset], 00h
+        mov [y_offset], 00h
+    restart_skip:
     call change_bg_color
     call draw_plane
     call draw_all_buildings
@@ -487,6 +599,9 @@ update_plane_y:
     add [y_offset], 10h
     mov [x_offset], 00h
     mov [bullets_left], 05h
+    mov [super_bullets_left], 01h
+    call update_super_ammo
+    call update_super_ammo
     inc [bullets_left]
     call delete_bullets_left
     dec [bullets_left]
@@ -505,6 +620,10 @@ next_level:
     update_speed:
         dec [speed]
     update_speed_skip:
+    jmp update_plane_y_middle_skip
+    update_plane_y_middle:
+        jmp update_plane_y
+    update_plane_y_middle_skip:
 
     ; clear bullet arrays to prevent overflow
     mov si, offset bx_offset_array
@@ -524,7 +643,7 @@ update_frame:
     mov si, offset x_offset
     mov ax, [si]
     cmp ax, 320
-    jge update_plane_y
+    jge update_plane_y_middle
     cmp [y_offset], 0B0h
     jge next_level
     add ax, 0ah
@@ -542,6 +661,22 @@ spacebar_pressed:
     spacebar_pressed_skip_create_bullet:
     jmp update_frame
 
+jmp restart_middle_skip
+restart_middle:
+    jmp restart
+restart_middle_skip:
+
+c_pressed:
+    cmp [super_bullets_left], 00h
+    jg c_pressed_create_bullet
+    jmp c_pressed_skip_create_bullet
+    c_pressed_create_bullet:
+        dec [super_bullets_left]
+        call update_super_ammo
+        call create_super_bullet
+    c_pressed_skip_create_bullet:
+    jmp update_frame
+
 mainLoop:
     mov bx, [speed]
     call delay
@@ -553,7 +688,23 @@ mainLoop:
     int 16h
     cmp al, ' '
     je spacebar_pressed
+    cmp al, 'c'
+    je c_pressed
+    cmp al, 'r'
+    je restart_middle
+    cmp al, 'p'
+    je pause_game
     jmp update_frame
+
+jmp pause_game_skip
+pause_game:
+    mov ah, 00h
+    int 16h
+    cmp al, 'p'
+    je update_frame
+    jmp pause_game
+pause_game_skip:
+
 
 Exit:
 END start
