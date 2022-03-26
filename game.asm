@@ -749,10 +749,12 @@ update_plane_y:
     jmp update_frame
 
 next_level:
+    ; clear the screen
+    call change_bg_color
     mov [x_offset], 00h
     mov [y_offset], 00h
     call draw_all_buildings
-    add [bullets_left], 05h
+    mov [bullets_left], 05h
     dec [bullet_durability]
     cmp [speed], 03h
     jg update_speed
@@ -773,6 +775,8 @@ next_level:
     mov si, offset dead_bullets_array
     call clear_array
     mov si, offset bullets_destroy_count_array
+    call clear_array
+    mov si, offset bullets_type_array
     call clear_array
     mov [bullet_count], 00h
 
