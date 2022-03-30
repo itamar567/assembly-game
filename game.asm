@@ -290,6 +290,10 @@ proc draw_plane
         int 16h
         cmp al, ' '
         je restart_middle1
+        cmp al, 'r'
+        je restart_middle1
+        cmp al, 'z'
+        je show_controls_middle3
         jmp exit_game
 endp
 
@@ -323,6 +327,11 @@ jmp restart_middle1_skip
 restart_middle1:
     jmp restart_middle2
 restart_middle1_skip:
+
+jmp show_controls_middle3_skip
+show_controls_middle3:
+    jmp show_controls_middle2
+show_controls_middle3_skip:
 
 proc draw_bullet
     mov cx, [bx_offset]
@@ -434,6 +443,11 @@ proc randomize_dx
     pop ax
     ret
 endp
+
+jmp show_controls_middle2_skip
+show_controls_middle2:
+    jmp show_controls_middle1
+show_controls_middle2_skip:
 
 proc draw_all_buildings
     mov bx, 00h
@@ -572,6 +586,11 @@ proc create_super_bullet
     ret
 endp
 
+jmp show_controls_middle1_skip
+show_controls_middle1:
+    jmp show_controls
+show_controls_middle1_skip:
+
 proc draw_bullets_left
     mov bx, 0
     cmp [bullets_left], 00h
@@ -694,7 +713,6 @@ Start:
     mov ds, ax
 
     call move_to_graphics_mode
-
     show_controls:
         ; Process BMP file
         call OpenFile
